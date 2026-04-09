@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Tic Tac Toe</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    text-align: center;
+    margin: 0;
+}
+
+.container {
+    margin-top: 40px;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 110px);
+    gap: 10px;
+    justify-content: center;
+    margin: 20px auto;
+}
+
+.cell {
+    width: 110px;
+    height: 110px;
+    background: white;
+    color: black;
+    font-size: 2.5rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: 0.3s;
+}
+
+.cell:hover {
+    background: #ddd;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background: #ff9800;
+    color: white;
+}
+
+button:hover {
+    background: #e68900;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>🤖 AI Tic Tac Toe</h1>
+    <p>Play against AI (Minimax Algorithm)</p>
+
+    <div class="board" id="board"></div>
+
+    <h2 id="status">Your Turn (X)</h2>
+
+    <button onclick="restartGame()">Restart Game</button>
+</div>
+
+<script>
+const boardDiv = document.getElementById("board");
+const statusText = document.getElementById("status");
+
+let board = ["","","","","","","","",""];
+let human = "X";
+let ai = "O";
+let gameActive = true;
+
+const winCombos = [
+  [0,1,2],[3,4,5],[6,7,8],
+  [0,3,6],[1,4,7],[2,5,8],
+  [0,4,8],[2,4,6]
+];
+
+// Create Board
+function createBoard() {
+    boardDiv.innerHTML = "";
+    board.forEach((_, i) => {
+        let cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.addEventListener("click", () => humanMove(i));
+        boardDiv.appendChild(cell);
+    });
+}
+
+createBoard();
+
+// Human Move
+function humanMove(i) {
+    if (board[i] !== "" || !gameActive) return;
+
+    board[i] = human;
+    updateUI();
+
+    if (checkWinner(board, human)) {
+        statusText.innerText = "🎉 You Win!";
+        gameActive = false;
+        return;
+    }
+
+    if (!board.includes("")) {
+        statusText.innerText = "😐 Draw!";
+        return;
+    }
+
+    setTimeout(aiMove, 500);
+}
+
+// AI Move
+function aiMove() {
+    let bestMove = minimax(board, ai).index;
+    board[bestMove] = ai;
+    updateUI();
+
+    if (checkWinner(board, ai)) {
+        statusText.innerText = "🤖 AI Wins!";
+        gameActive = false;
+    }
+}
+
+// Update UI
+function updateUI() {
+    document.querySelectorAll(".cell").forEach((cell, i) => {
+        cell.innerText = board[i];
+    });
+}
+
+// Minimax Algorithm
+function minimax(newBoard, player) {
+    let empty = newBoard.map((v,i)=>v===""?i:null).filter(v=>v!==null);
+
+    if (checkWinner(newBoard, human)) return {score: -10};
+    if (checkWinner(newBoard, ai)) return {score: 10};
+    if (empty.length === 0) return {score: 0};
+
+    let moves = [];
+
+    for (let i of empty) {
+        let move = {};
+        move.index = i;
+        newBoard[i] = player;
+
+        move.score = minimax(newBoard, player === ai ? human : ai).score;
+
+        newBoard[i] = "";
+        moves.push(move);
+    }
+
+    let bestMove;
+    if (player === ai) {
+        let bestScore = -Infinity;
+        moves.forEach((m, i) => {
+            if (m.score > bestScore) {
+                bestScore = m.score;
+                bestMove = i;
+            }
+        });
+    } else {
+        let bestScore = Infinity;
+        moves.forEach((m, i) => {
+            if (m.score < bestScore) {
+                bestScore = m.score;
+                bestMove = i;
+            }
+        });
+    }
+
+    return moves[bestMove];
+}
+
+// Check Winner
+function checkWinner(board, player) {
+    return winCombos.some(combo =>
+        combo.every(i => board[i] === player)
+    );
+}
+
+// Restart Game
+function restartGame() {
+    board = ["","","","","","","","",""];
+    gameActive = true;
+    statusText.innerText = "Your Turn (X)";
+    createBoard();
+}
+</script>
+
+</body>
+</html>
